@@ -132,6 +132,7 @@ class BedrockLLMExtension(Extension):
         cmd_result.set_property_string("detail", "success")
         rte.return_result(cmd_result, cmd)
 
+    '''
     def on_data(self, rte: RteEnv, data: Data) -> None:
         """
         on_data receives data from rte graph.
@@ -173,6 +174,100 @@ class BedrockLLMExtension(Extension):
 
         if self.bedrock_llm.config.mode == 'translate':
             self.memory.append({"role": "assistant", "content": [{"text": "Sure, here's the translation result: <translation>"}]})
+'''#aaaaa
+class BedrockLLMExtension(Extension):
+    def __init__(self):
+        self.is_awake = False  # 機器人是否處於喚醒狀態
+        self.memory = []  # 聊天記憶
+        self.outdate_ts = 0  # 用於打斷判斷的時間戳
+
+    def on_data(self, rte: RteEnv, data: Data) -> None:
+        """
+        解析輸入數據，執行相應的指令或聊天行為
+        """
+        logger.info(f"BedrockLLMExtension on_data")
+
+        # 解析輸入數據
+        input_text = self.input_data_parser.parse(data, self.bedrock_llm)
+        if not input_text:
+            logger.info("解析輸入數據失敗，忽略空輸入")
+            return
+
+        logger.info(f"接收到輸入: {input_text}")
+
+        # 未喚醒時的處理
+        if not self.is_awake:
+            if "開始說話" in input_text:
+                self.is_awake = True
+                self.respond(rte, "哈囉!我在呢")
+            else:
+                self.respond(rte, "待機...請說開始說話")
+            return
+
+        # 關鍵字處理
+        command_mapping = {
+            "閉嘴": self.respond_stop,
+            "等一下": self.respond_interrupt,
+        }
+
+        # 判斷是否為控制指令
+        for keyword, handler in command_mapping.items():
+            if keyword in input_text:
+                logger.info(f"觸發控制指令: {keyword}")
+                handler(rte)
+                return
+
+        # 若無關鍵字，執行聊天邏輯
+        self.handle_chat(rte, input_text)
+
+        def handle_chat(self, rte: RteEnv, input_text: str) -> None:
+            """
+            處理聊天邏輯
+            """
+            try:
+                logger.info(f"進行聊天: {input_text}")
+                # 添加到記憶
+                if len(self.memory) >= 10:
+                    self.memory.pop(0)
+                self.memory.append({"role": "user", "content": input_text})
+
+                # 模擬聊天回應（可替換為實際聊天模型的處理）
+                response = f"這是回應：{input_text}"
+                self.memory.append({"role": "assistant", "content": response})
+
+                self.respond(rte, response)
+            except Exception as e:
+                logger.error(f"處理聊天失敗，錯誤: {e}")
+
+        def respond(self, rte: RteEnv, message: str) -> None:
+            """
+            發送回應給使用者
+            """
+            try:
+                output_data = Data.create("text_data")
+                output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, message)
+                output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
+                rte.send_data(output_data)
+                logger.info(f"發送回應: {message}")
+            except Exception as err:
+                logger.error(f"發送回應失敗，錯誤: {err}")
+
+        def respond_stop(self, rte: RteEnv) -> None:
+            """
+            停止整個聊天
+            """
+            self.is_awake = False  # 重置狀態
+            self.memory.clear()
+            self.respond(rte, "已停止語音")
+
+    def respond_interrupt(self, rte: RteEnv) -> None:
+        """
+        停止當前講到一半的對話
+        """
+        self.outdate_ts = get_current_time()
+        self.respond(rte, "對話已被打斷") 
+
+
 
         def converse_stream_worker(start_time, input_text, memory, raw_text):
             try:

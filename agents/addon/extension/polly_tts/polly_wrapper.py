@@ -44,8 +44,8 @@ LANGCODE_MAP = {
     'fr-FR': 'fr-FR',
     'ko-KR': 'ko-KR',
     'hi-IN': 'hi-IN',
-    'zh-HK': 'yue-CN', # map zh-hk to yue-cn
-    'zh-TW': 'yue-CN', # map zh-tw to yue-cn
+    'zh-HK': 'cmn-CN', # map zh-hk to yue-cn
+    'zh-TW': 'cmn-CN', # map zh-tw to yue-cn
     'yue-CN': 'yue-CN',
 }
 

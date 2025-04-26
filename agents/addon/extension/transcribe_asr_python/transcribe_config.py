@@ -28,6 +28,6 @@ class TranscribeConfig:
             access_key="",
             secret_key="",
             sample_rate=16000,
-            lang_code='en-US',
+            lang_code='cmn-CN',
             enable_partial_results_stabilization=False
         )

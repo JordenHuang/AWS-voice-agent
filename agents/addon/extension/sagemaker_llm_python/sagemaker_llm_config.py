@@ -17,8 +17,8 @@ class SageMakerLLMConfig:
         self.top_p = 1.0
         self.prompt = ""
         self.mode = "chat"
-        self.input_language = ""
-        self.output_language = ""
+        self.input_language = "cmn_CN"
+        self.output_language = "cmn_CN"
         self.chat_template = ""
 
     @classmethod

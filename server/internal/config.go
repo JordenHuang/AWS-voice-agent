@@ -260,8 +260,8 @@ var (
 		},
 		languageChineseTraditional: {
 			extensionNamePollyTTS: {
-				voiceTypeMale:   "Hiujin",
-				voiceTypeFemale: "Hiujin",
+				voiceTypeMale:   "Zhiyu",
+				voiceTypeFemale: "Zhiyu",
 			},
 		},
 	}
