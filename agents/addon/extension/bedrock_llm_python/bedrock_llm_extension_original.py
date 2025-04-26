@@ -138,99 +138,7 @@ class BedrockLLMExtension(Extension):
         input_text = self.input_data_parser.parse(data, self.bedrock_llm)
         if not input_text:
             return
-            '''
-            Initially, awake is false
-            User prompt 開始說話 to make it awake
-            User prompt 閉嘴     to make it not awake
-            When awake, use 等一下 to interrupte it
-            When awake, any other
-            '''
-        need_send_text = False
-        if self.awake == 0:
-            logger.info("偵測到: 待機中")
-            if "開始說話" in input_text or "开始说话" in input_text:
-                self.awake = 1
-                logger.info("偵測到喚醒詞: 開始說話")
-                try:
-                    output_data = Data.create("text_data")
-                    output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "哈囉!我在呢")
-                    output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
-                    rte.send_data(output_data)
-                    logger.info("發送回應: 哈囉!我在呢")
-                except Exception as err:
-                    logger.error(f"發送回應失敗，錯誤: {err}")
-            else:
-                try:
-                    output_data = Data.create("text_data")
-                    output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "待機中，請說開始說話")
-                    output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
-                    rte.send_data(output_data)
-                    logger.info("發送回應: 待機中，請說開始說話")
-                except Exception as err:
-                    logger.error(f"發送回應失敗，錯誤: {err}")
-        else:
-            if "閉嘴" in input_text or "闭嘴" in input_text:
-                self.awake = 0
-                logger.info("偵測到停止指令: 閉嘴")
-                # self.memory.clear()
-                try:
-                    output_data = Data.create("text_data")
-                    output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "已停止語音")
-                    output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
-                    rte.send_data(output_data)
-                    logger.info("[INFO, stop SUCCESS]發送回應: 已停止語音")
-                except Exception as err:
-                    logger.error(f"[ERROR, stop failed]停止語音回應發送失敗，錯誤: {err}")
-            elif "等一下" in input_text:
-                logger.info("偵測到打斷指令: 打斷")
-                self.outdate_ts = get_current_time()
-                try:
-                    output_data = Data.create("text_data")
-                    output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "語音已打斷")
-                    output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
-                    rte.send_data(output_data)
-                    logger.info("[INFO, wait SUCCESS]發送回應: 語音已打斷")
-                except Exception as err:
-                    logger.error(f"[ERROR, wait failed]打斷語音回應發送失敗，錯誤: {err}")
-            else:
-                need_send_text = True
 
-        # 如果處於睡眠模式，不進行後續推理
-        if need_send_text == False:
-            return
-
-        # Prepare memory. A conversation must alternate between user and assistant roles
-        while len(self.memory):
-            if len(self.memory) > self.max_memory_length:
-                logger.debug(
-                    f"pop out first message, reason: memory length limit: `{self.memory[0]}`"
-                )
-                self.memory.pop(0)
-            elif self.memory[0]["role"] == "assistant":
-                logger.debug(
-                    f"pop out first message, reason: messages can not start with assistant: `{self.memory[0]}`"
-                )
-                self.memory.pop(0)
-            else:
-                break
-
-        if len(self.memory) and self.memory[-1]["role"] == "user":
-            # if last user input got empty response, append current user input.
-            logger.debug(
-                f"found last message with role `user`, will append this input into last user input"
-            )
-            self.memory[-1]["content"].append({"text": input_text})
-        else:
-            self.memory.append({"role": "user", "content": [{"text": input_text}]})
-
-        if self.bedrock_llm.config.mode == 'translate':
-            self.memory.append({"role": "assistant", "content": [{"text": "Sure, here's the translation result: <translation>"}]})
-        # ==============================
-
-
-
-
-        '''{
         # 先處理目前 awake 狀態下的特別回應
         if self.awake == 1:
             if "等一下" in input_text:
@@ -279,6 +187,7 @@ class BedrockLLMExtension(Extension):
                     logger.info("發送回應: 待機中，請說開始說話")
                 except Exception as err:
                     logger.error(f"發送回應失敗，錯誤: {err}")
+
         # 無論 awake 狀態，都繼續偵測關鍵字
 
 
@@ -329,7 +238,7 @@ class BedrockLLMExtension(Extension):
 
             except Exception as err:
                 logger.error(f"生成或發送回應失敗，錯誤: {err}")
-        }'''
+
         def converse_stream_worker(start_time, input_text, memory, raw_text):
             try:
                 logger.info(f"GetConverseStream for input text: [{raw_text}], memory: [{memory}], full prompt: [{input_text}]")

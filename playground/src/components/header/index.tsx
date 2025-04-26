@@ -1,62 +1,88 @@
-"use client"
-
-import { useAppSelector, GITHUB_URL, useSmallScreen } from "@/common"
-import Network from "./network"
-import { GithubIcon, LogoIcon } from "@/components/icons"
-import { InfoCircleOutlined, QuestionCircleOutlined, SettingOutlined } from "@ant-design/icons"
-import { Popover } from "antd"
-import InfoPopup from "./InfoPopup"
-import DescriptionPopup from "./DescriptionPopup"
-import SettingsDialog from "./SettingsDialog"
-import ConnectButton from "./ConnectButton"
-
+import { useState, useEffect } from "react"
+import {
+    useAppSelector,
+    useAppDispatch,
+    apiStartService,
+    apiPing,
+    GRAPH_NAME_OPTIONS,
+    LANG_OPTIONS
+} from "@/common"
+import { setAgentConnected } from "@/store/reducers/global"
 import styles from "./index.module.scss"
-import { useMemo, useState } from "react"
 
-const Header = () => {
-  const options = useAppSelector(state => state.global.options)
-  const { channel } = options
-  const { isSmallScreen } = useSmallScreen()
-  const [settingsOpen, setSettingsOpen] = useState(false)
+let intervalId: any
 
-  const channelNameText = useMemo(() => {
-    return !isSmallScreen ? `Channel Name：${channel}` : channel
-  }, [isSmallScreen, channel])
+const ConnectButton = () => {
+    const dispatch = useAppDispatch()
+    const channel = useAppSelector(state => state.global.options.channel)
+    const userId = useAppSelector(state => state.global.options.userId)
+    const [mode] = useState("chat")
+    const [graphName] = useState(GRAPH_NAME_OPTIONS[2]['value'])
+    const [lang] = useState(LANG_OPTIONS[1]['value'])
+    const [outputLanguage] = useState(lang)
+    const [partialStabilization] = useState(false)
+    const [voice] = useState("male")
+    const [greeting] = useState("")
+    const [mcpSelectedServers] = useState<string[]>([])
+    const [mcpApiBase] = useState("")
+    const [mcpApiKey] = useState("")
+    const [mcpSelectedModel] = useState("")
 
-  const onClickGithub = () => {
-    if (typeof window !== "undefined") {
-      window.open(GITHUB_URL, "_blank")
+    // 自動連線功能
+    useEffect(() => {
+        const autoConnect = async () => {
+            try {
+                const res = await apiStartService({
+                    channel,
+                    userId,
+                    language: lang,
+                    voiceType: voice,
+                    graphName: graphName,
+                    mode: mode,
+                    outputLanguage: outputLanguage,
+                    partialStabilization: partialStabilization,
+                    greeting: greeting,
+                    mcpSelectedServers: mcpSelectedServers.join(','),
+                    mcpApiBase: mcpApiBase,
+                    mcpApiKey: mcpApiKey,
+                    mcpModel: mcpSelectedModel
+                })
+
+                if (res?.code === 0) {
+                    dispatch(setAgentConnected(true))
+                    startPing()
+                }
+            } catch (error) {
+                console.error("Auto connect failed:", error)
+                // 如果連線失敗，5秒後重試
+                setTimeout(autoConnect, 5000)
+            }
+        }
+
+        // 組件掛載時自動連線
+        autoConnect()
+
+        // 組件卸載時清理
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId)
+                intervalId = null
+            }
+        }
+    }, []) // 只在組件掛載時執行一次
+
+    const startPing = () => {
+        if (intervalId) {
+            clearInterval(intervalId)
+        }
+        intervalId = setInterval(() => {
+            apiPing(channel)
+        }, 3000)
     }
-  }
 
-  return <div className={styles.header}>
-    <span className={styles.logoWrapper}>
-      <LogoIcon></LogoIcon>
-    </span>
-    <span className={styles.content}>{channelNameText}</span>
-    <div className={styles.rightSection}>
-      <span onClick={onClickGithub} className={styles.githubWrapper}>
-        <GithubIcon></GithubIcon>
-      </span>
-      <Network></Network>
-      <Popover content={<InfoPopup />} trigger="click" placement="bottom">
-        <span className={styles.iconWrapper}>
-          <InfoCircleOutlined />
-        </span>
-      </Popover>
-      <Popover content={<DescriptionPopup />} trigger="click" placement="bottom">
-        <span className={styles.iconWrapper}>
-          <QuestionCircleOutlined />
-        </span>
-      </Popover>
-      <span className={styles.iconWrapper} onClick={() => setSettingsOpen(true)}>
-        <SettingOutlined />
-      </span>
-      <ConnectButton />
-    </div>
-    <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-  </div>
+    // 移除按鈕的渲染，因為不需要手動控制連線狀態
+    return null
 }
 
+export default ConnectButton
 
-export default Header

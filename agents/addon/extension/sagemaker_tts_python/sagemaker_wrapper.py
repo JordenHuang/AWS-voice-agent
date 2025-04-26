@@ -137,7 +137,7 @@ class SageMakerTTSWrapper:
                 "language_id": language,
 
                 # optional parameters
-                "temperature": 0.75,
+                "temperature": 0.3,
                 "top_k": 50,
                 "top_p": 0.85,
                 "speed": 1,

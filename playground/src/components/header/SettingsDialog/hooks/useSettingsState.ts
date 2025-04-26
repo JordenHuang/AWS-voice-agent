@@ -47,8 +47,8 @@ export type SettingsAction =
 const initialSettingsState: SettingsState = {
     mode: "chat",
     graphName: GRAPH_NAME_OPTIONS[2]['value'],
-    lang: LANG_OPTIONS[1]['value'],
-    outputLanguage: LANG_OPTIONS[1]['value'],
+    lang: LANG_OPTIONS[2]['value'],
+    outputLanguage: LANG_OPTIONS[2]['value'],
     partialStabilization: false,
     voice: "male",
     greeting: "",

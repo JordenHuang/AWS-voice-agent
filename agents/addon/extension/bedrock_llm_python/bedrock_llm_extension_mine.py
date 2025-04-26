@@ -138,13 +138,13 @@ class BedrockLLMExtension(Extension):
         input_text = self.input_data_parser.parse(data, self.bedrock_llm)
         if not input_text:
             return
-            '''
-            Initially, awake is false
-            User prompt 開始說話 to make it awake
-            User prompt 閉嘴     to make it not awake
-            When awake, use 等一下 to interrupte it
-            When awake, any other
-            '''
+			'''
+			Initially, awake is false
+			User prompt 開始說話 to make it awake
+			User prompt 閉嘴     to make it not awake
+			When awake, use 等一下 to interrupte it
+			When awake, any other
+			'''
         need_send_text = False
         if self.awake == 0:
             logger.info("偵測到: 待機中")
@@ -172,15 +172,15 @@ class BedrockLLMExtension(Extension):
             if "閉嘴" in input_text or "闭嘴" in input_text:
                 self.awake = 0
                 logger.info("偵測到停止指令: 閉嘴")
-                # self.memory.clear()
+                self.memory.clear()
                 try:
                     output_data = Data.create("text_data")
                     output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "已停止語音")
                     output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
                     rte.send_data(output_data)
-                    logger.info("[INFO, stop SUCCESS]發送回應: 已停止語音")
+                    logger.info("發送回應: 已停止語音")
                 except Exception as err:
-                    logger.error(f"[ERROR, stop failed]停止語音回應發送失敗，錯誤: {err}")
+                    logger.error(f"停止語音回應發送失敗，錯誤: {err}")
             elif "等一下" in input_text:
                 logger.info("偵測到打斷指令: 打斷")
                 self.outdate_ts = get_current_time()
@@ -189,9 +189,9 @@ class BedrockLLMExtension(Extension):
                     output_data.set_property_string(DATA_OUT_TEXT_DATA_PROPERTY_TEXT, "語音已打斷")
                     output_data.set_property_bool(DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT, True)
                     rte.send_data(output_data)
-                    logger.info("[INFO, wait SUCCESS]發送回應: 語音已打斷")
+                    logger.info("發送回應: 語音已打斷")
                 except Exception as err:
-                    logger.error(f"[ERROR, wait failed]打斷語音回應發送失敗，錯誤: {err}")
+                    logger.error(f"打斷語音回應發送失敗，錯誤: {err}")
             else:
                 need_send_text = True
 
@@ -230,7 +230,7 @@ class BedrockLLMExtension(Extension):
 
 
 
-        '''{
+'''
         # 先處理目前 awake 狀態下的特別回應
         if self.awake == 1:
             if "等一下" in input_text:
@@ -329,7 +329,7 @@ class BedrockLLMExtension(Extension):
 
             except Exception as err:
                 logger.error(f"生成或發送回應失敗，錯誤: {err}")
-        }'''
+'''
         def converse_stream_worker(start_time, input_text, memory, raw_text):
             try:
                 logger.info(f"GetConverseStream for input text: [{raw_text}], memory: [{memory}], full prompt: [{input_text}]")
