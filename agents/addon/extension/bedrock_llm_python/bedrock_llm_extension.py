@@ -19,10 +19,11 @@ from .utils import *
 
 class BedrockLLMExtension(Extension):
     memory = []
-    max_memory_length = 10
+    max_memory_length = 24
     outdate_ts = 0
     bedrock_llm = None
     awake = 0
+    face_state = 'neutral'
     def on_start(self, rte: RteEnv) -> None:
         logger.info("BedrockLLMExtension on_start")
         # Prepare configuration
@@ -132,7 +133,14 @@ class BedrockLLMExtension(Extension):
         cmd_result = CmdResult.create(StatusCode.OK)
         cmd_result.set_property_string("detail", "success")
         rte.return_result(cmd_result, cmd)
-
+    def send_face_state(self, rte: RteEnv, state: str):
+        try:
+            state_data = Data.create("face_state")
+            state_data.set_property_string("face_state", state)
+            rte.send_data(state_data)
+            logger.info(f"發送表情狀態: {state}")
+        except Exception as err:
+            logger.error(f"表情狀態發送失敗，錯誤: {err}")
     def on_data(self, rte: RteEnv, data: Data) -> None:
         logger.info(f"BedrockLLMExtension on_data")
         input_text = self.input_data_parser.parse(data, self.bedrock_llm)
@@ -147,9 +155,11 @@ class BedrockLLMExtension(Extension):
             '''
         need_send_text = False
         if self.awake == 0:
+            self.send_face_state(rte, 'neutral')
             logger.info("偵測到: 待機中")
             if "開始說話" in input_text or "开始说话" in input_text:
                 self.awake = 1
+                self.send_face_state(rte, 'happy')
                 logger.info("偵測到喚醒詞: 開始說話")
                 try:
                     output_data = Data.create("text_data")
@@ -171,6 +181,7 @@ class BedrockLLMExtension(Extension):
         else:
             if "閉嘴" in input_text or "闭嘴" in input_text:
                 self.awake = 0
+                self.send_face_state(rte, 'sad')
                 logger.info("偵測到停止指令: 閉嘴")
                 # self.memory.clear()
                 try:

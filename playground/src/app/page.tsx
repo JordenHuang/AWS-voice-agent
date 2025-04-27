@@ -48,6 +48,45 @@ export default function Home() {
     setActiveMenu(item)
   }
 
+  // 在 return 語句中的適當位置添加（例如在 Chat 組件上方）：
+const FaceExpression = () => {
+  const [face, setFace] = useState('neutral');
+
+  // 這個 useEffect 用來測試表情是否正常切換
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFace(current => {
+        if (current === 'neutral') return 'happy';
+        if (current === 'happy') return 'sad';
+        return 'neutral';
+      });
+      // setFace(current);
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div style={{ 
+      width: '500px',
+      height: '500px',
+      position: 'relative',
+      zIndex: 1000 
+    }}>
+      <img 
+        src={`assets/faces/${face}.svg`}
+        alt="Face Expression" 
+        style={{ 
+          backgroundColor: "white",
+          width: '100%', 
+          height: '100%',
+          objectFit: 'contain' 
+        }}
+      />
+    </div>
+  );
+};
+
   return (
     <AuthInitializer>
       <main className={styles.home} style={{
@@ -78,6 +117,9 @@ export default function Home() {
           </div>
           :
           <div className={styles.content} suppressHydrationWarning={true}>
+                <FaceExpression />  {/* 加在這裡 */
+                  <p>"HELLO"</p>
+                }
             <Rtc></Rtc>
             <Chat></Chat>
           </div>

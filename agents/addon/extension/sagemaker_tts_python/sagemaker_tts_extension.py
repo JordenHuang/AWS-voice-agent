@@ -1,3 +1,4 @@
+#SageMakerTTSExtension
 from rte import (
     Extension,
     RteEnv,
@@ -132,15 +133,22 @@ class SageMakerTTSExtension(Extension):
 
     def on_data(self, rte: RteEnv, data: Data) -> None:
         logger.info("SageMakerTTSExtension on_data")
-        inputText = data.get_property_string("text")
-        if not inputText:
-            logger.info("ignore empty text")
-            return
+        try:
+            input_text = data.get_property_string("text")
+            if not input_text:
+                logger.info("No input text provided.")
+                return
 
-        is_end = data.get_property_bool("end_of_segment")
+            # 呼叫 SageMaker TTS 服務進行音頻生成
+            audio_stream = self.sagemaker_tts.synthesize(text=input_text)
+            for event in audio_stream:
+                chunk_bytes = event['PayloadPart']['Bytes']
+                pcm_frame = self.__get_frame(chunk_bytes)
+                rte.send_pcm_frame(pcm_frame)
 
-        logger.info("on data %s %d", inputText, is_end)
-        self.queue.put((inputText, datetime.now()))
+        except Exception as e:
+            logger.exception(f"Error in TTS processing: {e}")
+
 
     def on_cmd(self, rte: RteEnv, cmd: Cmd) -> None:
         logger.info("SageMakerTTSExtension on_cmd")

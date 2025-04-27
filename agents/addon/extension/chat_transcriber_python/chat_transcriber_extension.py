@@ -5,7 +5,7 @@
 # Copyright (c) 2024 Agora IO. All rights reserved.
 #
 #
-
+import boto3
 import json
 from rte import (
     Extension,
@@ -29,7 +29,7 @@ TEXT_DATA_END_OF_SEGMENT_FIELD = "end_of_segment"
 
 # record the cached text data for each stream id
 cached_text_map = {}
-
+bedrock_client = boto3.client("bedrock", region_name="us-west-2")  # 替換為你的區域
 
 class ChatTranscriberExtension(Extension):
     def on_start(self, rte: RteEnv) -> None:
@@ -48,16 +48,33 @@ class ChatTranscriberExtension(Extension):
         cmd_result = CmdResult.create(StatusCode.OK)
         cmd_result.set_property_string("detail", "success")
         rte.return_result(cmd_result, cmd)
-
+#hhhhhh
     def on_data(self, rte: RteEnv, data: Data) -> None:
-        """
-        on_data receives data from rte graph.
-        current supported data:
-          - name: text_data
-            example:
-            {"name": "text_data", "properties": {"text": "hello", "is_final": true, "stream_id": 123, "end_of_segment": true}}
-        """
         logger.info(f"on_data")
+        try:
+            text = data.get_property_string(TEXT_DATA_TEXT_FIELD)
+            stream_id = data.get_property_int(TEXT_DATA_STREAM_ID_FIELD)
+            end_of_segment = data.get_property_bool(TEXT_DATA_END_OF_SEGMENT_FIELD)
+        except Exception as e:
+            logger.exception(f"Error extracting data: {e}")
+            return
+
+        if end_of_segment:
+            # 傳遞文本給 Bedrock 代理人
+            try:
+                response = bedrock_client.agrent(
+                    modelId="7CPKIKVOEF",  # 替換為你的代理人 ID
+                    contentType="application/json",
+                    body=json.dumps({"inputText": text}),
+                )
+                agent_response = json.loads(response["body"])["outputText"]
+                logger.info(f"Bedrock agent response: {agent_response}")
+
+                # 將回應文本傳給 TTS 模組
+                self.forward_to_tts(rte, agent_response, stream_id)
+
+            except Exception as e:
+                logger.error(f"Error invoking Bedrock agent: {e}")
 
         try:
             text = data.get_property_string(TEXT_DATA_TEXT_FIELD)
@@ -135,3 +152,10 @@ class ChatTranscriberExtension(Extension):
         except Exception as e:
             logger.warning(f"on_data new_data error: {e}")
             return
+
+    def forward_to_tts(self, rte: RteEnv, text: str, stream_id: int):
+        # 創建新數據傳遞到 TTS
+        data = Data.create("tts_input")
+        data.set_property_string("text", text)
+        data.set_property_int("stream_id", stream_id)
+        rte.send_data(data)

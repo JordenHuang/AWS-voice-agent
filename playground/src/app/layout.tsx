@@ -2,6 +2,7 @@ import { ConfigProvider } from "antd"
 import { StoreProvider } from "@/store";
 import "@/css/globals.css";
 import type { Metadata, Viewport } from "next";
+import DynamicSvg from "@/components/face_expression/face_expression"
 
 
 export const metadata: Metadata = {
@@ -22,6 +23,22 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
+
+// export default function RootLayout({
+//   children,
+// }: Readonly<{
+//   children: React.ReactNode;
+// }>) {
+//   return (
+//     <html lang="en">
+//       <body>
+//         <ConfigProvider>
+//           <DynamicSvg />
+//         </ConfigProvider>
+//       </body>
+//     </html>
+//   );
+// }
 
 
 
