@@ -1,3 +1,9 @@
+# AWS Voice Agent
+
+## NOTICE
+Fork from [https://github.com/Chen188/TEN-Agent](https://github.com/Chen188/TEN-Agent)
+
+
 ![Astra banner image](https://github.com/TEN-framework/docs/blob/main/assets/jpg/astra_banner.jpg?raw=true)
 <div align="center">
 
